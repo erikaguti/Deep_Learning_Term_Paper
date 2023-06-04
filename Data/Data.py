@@ -4,7 +4,7 @@ import numpy as np
 from matplotlib import pyplot
 import random
 
-class Data():
+class DataLoader():
     
     def __init__(self, split, distortions):
         self.sample_type = split
@@ -60,7 +60,7 @@ class Data():
         pyplot.tight_layout()
         pyplot.show()
         
-    def dataset(self, size, ratios=dict(clean = 1)):
+    def create_dataset(self, size, ratios):
         
         images = []
 
