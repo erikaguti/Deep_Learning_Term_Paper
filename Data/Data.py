@@ -2,6 +2,7 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 import numpy as np
 from matplotlib import pyplot
+import matplotlib.pyplot as plt
 import random
 
 class DataLoader():
@@ -69,3 +70,32 @@ class DataLoader():
             
         return images
 
+    def display_10(array1, array2):
+        
+        '''Displays ten random images from each one of the supplied arrays'''
+
+        n = 10
+
+        plt.figure(figsize=(20, 4))
+
+        for i in range(n):
+            # Display original
+            ax = plt.subplot(2, n, i + 1)
+            try:
+                plt.imshow(array1[i]['image'])
+            except (IndexError, TypeError) as e:
+                plt.imshow(array1[i])
+            plt.gray()
+            ax.get_xaxis().set_visible(False)
+            ax.get_yaxis().set_visible(False)
+
+            # Display reconstruction
+            ax = plt.subplot(2, n, i + 1 + n)
+            try:
+                plt.imshow(array2[i]['image'])
+            except (IndexError, TypeError) as e:
+                plt.imshow(array2[i])
+            plt.gray()
+            ax.get_xaxis().set_visible(False)
+            ax.get_yaxis().set_visible(False)
+        plt.show()
