@@ -45,7 +45,7 @@ class DataLoader():
                 data_dict[f'{self.distortion_list[distortion]}'].append({
                                                   'id':f'{self.distortion_list[distortion]}_{image}',
                                                   'image':distorted_mnists[distortion]['image'][image],
-                                                  'label':distorted_mnists[distortion]['image'][image],
+                                                  'label':distorted_mnists[distortion]['label'][image],
                                                   'distortion': tf.constant(distortion + 1)})
         return data_dict
     
