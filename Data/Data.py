@@ -99,3 +99,41 @@ class DataLoader():
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)
         plt.show()
+        
+class SVHN():
+
+    def __init__(self, split):
+        self.sample_type = split
+        self.data_dict = self.load()
+ 
+    def load(self):
+        svhn_data = tfds.load('svhn_cropped', split=self.sample_type, shuffle_files=True)
+
+        data_dict = {'svhn_img': []}
+    
+        for batch in svhn_data:
+            data_dict['svhn_img'].append({'id': f'svhn_{batch}', 
+                                'image': batch['image'], 
+                                'label': batch['label'],
+                                })
+            
+        return data_dict
+
+    def display(array):
+        
+        n = 10
+
+        plt.figure(figsize=(20, 4))
+
+        for i in range(n):
+
+            ax = plt.subplot(2, n, i + 1)
+            try:
+                plt.imshow(array[i]['image'])
+            except (IndexError, TypeError) as e:
+                plt.imshow(array[i])
+            plt.gray()
+            ax.get_xaxis().set_visible(False)
+            ax.get_yaxis().set_visible(False)
+
+        plt.show()
