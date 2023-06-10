@@ -17,6 +17,7 @@ class MNIST_SOA_Model():
         with torch.no_grad():
             
             incorrect_images = []
+            correct_images = []
             
             for image in range(len(images)):
         
@@ -25,8 +26,13 @@ class MNIST_SOA_Model():
                 correct += (pred.logits.argmax(1) == images[image]['label']).type(torch.float).sum().item()
 
                 if pred.logits.argmax(1) != images[image]['label']:
+                    
                     incorrect_images.append(image)
+                
+                else:
+                    correct_images.append(image)
+
         
-        return correct/len(images), incorrect_images
+        return correct/len(images), incorrect_images, correct_images
     
 

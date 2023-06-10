@@ -110,7 +110,7 @@ class ConvDenoiser():
 
         return history, score, predictions
     
- class CNN():
+class CNN():
     def __init__(self, X, X_test, y, y_test):
         self.X = X
         self.X_test = X_test
