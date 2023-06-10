@@ -20,8 +20,6 @@ class MNIST_SOA_Model():
             correct_images = []
             
             for image in range(len(images)):
-
-                print('Processing', image['id'])
         
                 pred = self.soa_model(images[image]['image'])
         

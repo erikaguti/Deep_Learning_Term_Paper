@@ -11,7 +11,7 @@ test_data_obj = DataLoader('test', distortions)
 
 inference_datasets = []
 
-size = 10000
+size = 1000
 
 breakouts = [{'clean': 1}] # only clean
 
