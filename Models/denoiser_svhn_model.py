@@ -8,22 +8,18 @@ import tensorflow as tf
 
 # define denoiser architecture
 class ConvDenoiser():
-    def __init__(self, X_noisy, X_clean, y_noisy, y_clean):
+    def __init__(self, X_noisy, X_clean):
         self.X_noisy = X_noisy
         self.X_clean = X_clean
-        self.y_noisy = y_noisy
-        self.y_clean = y_clean
 
     def get_callbacks(self):
         early_stopping = tf.keras.callbacks.EarlyStopping(mode="min", patience=5)
         return early_stopping
 
-    def model(self, X_noisy, X_clean, y_noisy, y_clean):
+    def model(self, X_noisy, X_clean):
         # convery image lists to NumPy arrays
         X_noisy = np.array(X_noisy)
         X_clean = np.array(X_clean)
-        y_noisy = np.array(y_noisy)
-        y_clean = np.array(y_clean)
 
         # reshape image arrays to match the input shape of the autoencoder
         X_noisy = X_noisy.reshape((-1, 28, 28, 1))
