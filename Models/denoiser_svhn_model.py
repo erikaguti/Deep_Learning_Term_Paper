@@ -8,7 +8,7 @@ import tensorflow as tf
 
 # define denoiser architecture
 class ConvDenoiser():
-    def __init__(self, X_noisy, X_clean:
+    def __init__(self, X_noisy, X_clean):
         self.X_noisy = X_noisy
         self.X_clean = X_clean
 
