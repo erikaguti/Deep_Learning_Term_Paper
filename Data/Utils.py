@@ -3,8 +3,11 @@ import torch.nn.functional as F
 
 
 def transform_MNIST_tensor(image):
+
+
         numpy_array = image['image'].numpy() / 255 # turn tensorflow tensor to numpy array and normalize pixel values
-    
+        if numpy_array.size == 150528:
+                return image
         # move channel dimension to the front and convert into Pytorch tensor
         tensor = torch.tensor(numpy_array.reshape((1, 28, 28)))
     
