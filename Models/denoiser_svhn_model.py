@@ -1,5 +1,5 @@
 from keras.layers import Dense, Input, BatchNormalization
-from keras.layers import Conv2D, Flatten, MaxPool2D
+from keras.layers import Conv2D, Flatten, MaxPooling2D, UpSampling2D
 from keras.layers import Reshape, Conv2DTranspose, Dropout
 from keras.models import Model, Sequential
 from keras import backend as K
@@ -14,35 +14,37 @@ class ConvDenoiser():
         self.y_noisy = y_noisy
         self.y_clean = y_clean
 
+    def get_callbacks(self):
+        early_stopping = tf.keras.callbacks.EarlyStopping(mode="min", patience=5)
+        return early_stopping
+
     def model(self, X_noisy, X_clean, y_noisy, y_clean):
+        # convery image lists to NumPy arrays
         X_noisy = np.array(X_noisy)
         X_clean = np.array(X_clean)
+        y_noisy = np.array(y_noisy)
+        y_clean = np.array(y_clean)
 
-        y_noisy = tf.keras.utils.to_categorical(y_noisy, 10)
-        y_clean = tf.keras.utils.to_categorical(y_clean, 10)
-
-        # reshape image arrays to match input shape of the autoencoder
+        # reshape image arrays to match the input shape of the autoencoder
         X_noisy = X_noisy.reshape((-1, 28, 28, 1))
         X_clean = X_clean.reshape((-1, 28, 28, 1))
 
-        # normalize pixel values to the range [0, 1]
+        # normalize pixels
         X_noisy = X_noisy / 255.0
         X_clean = X_clean / 255.0
 
         # network params
         input_shape = (28, 28, 1)
-        batch_size = 64
-        validation_split = 0.25
-        epochs = 25
+        batch_size = 128
         kernel_size = 6
         latent_dim = 64
         layer_filters = [64, 256]
 
-        # autoencoder
+        # autoencoder model
         inputs = Input(shape=input_shape, name='encoder_input')
         x = inputs
 
-        # Stack of Conv2D(64)-Conv2D(128)
+        # stack of Conv2D(64)-Conv2D(128)
         for filters in layer_filters:
             x = Conv2D(filters=filters,
                        kernel_size=kernel_size,
@@ -50,58 +52,64 @@ class ConvDenoiser():
                        activation='relu',
                        padding='same')(x)
 
+        # decoder model
         shape = K.int_shape(x)
 
         # latent vector
         x = Flatten()(x)
         latent = Dense(latent_dim, name='latent_vector')(x)
 
-        # encoder
+        # encoder model
         encoder = Model(inputs, latent, name='encoder')
         encoder.summary()
 
-        # decoder
+        # decoder model
         latent_inputs = Input(shape=(latent_dim,), name='decoder_input')
         x = Dense(shape[1] * shape[2] * shape[3])(latent_inputs)
         x = Reshape((shape[1], shape[2], shape[3]))(x)
-        
+
         # stack of Conv2DTranspose(64)-Conv2DTranspose(32)
-        for filters in layer_filters[::-1]: # last layer
+        for filters in layer_filters[::-1]:
             x = Conv2DTranspose(filters=filters,
                                 kernel_size=kernel_size,
                                 strides=2,
                                 activation='relu',
                                 padding='same')(x)
-            
-        x = Flatten()(x)
-        outputs = Dense(10, activation='sigmoid', name='decoder_output')(x)
-        
-        # instantiate decoder
+
+        # denoised input
+        outputs = Conv2DTranspose(filters=1,
+                                  kernel_size=kernel_size,
+                                  padding='same',
+                                  activation='sigmoid',
+                                  name='decoder_output')(x)
+
         decoder = Model(latent_inputs, outputs, name='decoder')
         decoder.summary()
 
-        # instantiate autoencoder
         autoencoder = Model(inputs, decoder(encoder(inputs)), name='autoencoder')
         autoencoder.summary()
 
-        autoencoder.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['acc'])
+        autoencoder.compile(optimizer='adam', loss='binary_crossentropy')
         autoencoder.summary()
 
+        early_stopping = self.get_callbacks() 
+
         # train
-        history = autoencoder.fit(X_clean, y_clean,
-                                validation_data=[X_noisy, y_noisy],
-                                epochs=epochs,
-                                batch_size=batch_size)
+        history = autoencoder.fit(X_noisy,
+                                X_clean,
+                                validation_split=0.25,
+                                epochs=20,
+                                batch_size=batch_size,
+                                callbacks=early_stopping)
 
         # score
-        loss, acc = autoencoder.evaluate(X_noisy, y_noisy, verbose=0)
+        score = autoencoder.evaluate(X_noisy, X_clean)
 
         autoencoder.save('denoising_autoenconder.model')
 
-        # predict autoencoder output
         predictions = autoencoder.predict(X_noisy)
 
-        return history, loss, acc, predictions
+        return history, score, predictions
 
 # convolutional neural network model for SVHN dataset
 class CNN():
@@ -121,9 +129,6 @@ class CNN():
         y = np.array(y)  
         y_test = np.array(y_test) 
 
-        # y = tf.keras.utils.to_categorical(y, 10)
-        # y_test = tf.keras.utils.to_categorical(y_test, 10)
-
         X = X.reshape((-1, 32, 32, 3))
         X_test = X_test.reshape((-1, 32, 32, 3))
 
@@ -133,9 +138,9 @@ class CNN():
 
         # network params
         input_shape = (32, 32, 3)
-        batch_size = 64
-        validation_split = 0.1
-        epochs = 25
+        batch_size = 16
+        validation_split = 0.2
+        epochs = 15
 
         model = Sequential([
 
@@ -144,7 +149,7 @@ class CNN():
             Conv2D(64, (5,5), activation='relu', padding="same"),
             
             Dropout(0.2),
-            MaxPool2D((2,2), strides=2),
+            MaxPooling2D((2,2), strides=2),
             
             Dense(32, activation='relu'),
             Flatten(),
@@ -154,15 +159,15 @@ class CNN():
 
         model.summary()
 
-        model.compile(optimizer='adam', loss = 'sparse_categorical_crossentropy', metrics=['acc'])
+        model.compile(optimizer='adam', loss = 'sparse_categorical_crossentropy', metrics=['accuracy'])
 
-        early_stopping = self.get_callbacks()
+        early_stopping = self.get_callbacks() 
 
         history = model.fit(X, y,
                     validation_split=validation_split,
                     epochs=epochs,
-                    callbacks=early_stopping,
-                    batch_size=batch_size)
+                    batch_size=batch_size,
+                    callbacks=early_stopping)
         
         # predict autoencoder output
         y_preds = model.predict(X_test)
@@ -178,14 +183,17 @@ class ConvDenoiser_SVHN():
         self.X_test = X_test
         self.y = y
         self.y_test = y_test
+    
+    def get_callbacks(self):
+        early_stopping = tf.keras.callbacks.EarlyStopping(mode="min", patience=5)
+        return early_stopping
 
     def model(self, X, X_test, y, y_test):
         X = np.array(X)
         X_test = np.array(X_test)
         y = np.array(y)  
-        y_test = np.array(y_test)
+        y_test = np.array(y_test) 
 
-        # reshape image arrays to match input shape of the autoencoder
         X = X.reshape((-1, 32, 32, 3))
         X_test = X_test.reshape((-1, 32, 32, 3))
 
@@ -196,75 +204,42 @@ class ConvDenoiser_SVHN():
         # network params
         input_shape = (32, 32, 3)
         batch_size = 64
-        validation_split = 0.25
-        epochs = 25
-        kernel_size = 6
-        latent_dim = 64
-        layer_filters = [64, 256]
+        validation_split = 0.2
+        epochs = 15
+        layer_filter = 128
 
-        # autoencoder
         inputs = Input(shape=input_shape, name='encoder_input')
-        x = inputs
 
-        # Stack of Conv2D(64)-Conv2D(128)
-        for filters in layer_filters:
-            x = Conv2D(filters=filters,
-                       kernel_size=kernel_size,
-                       strides=2,
-                       activation='relu',
-                       padding='same')(x)
+        x = Conv2D(layer_filter, (3, 3), activation='relu', padding='same')(inputs)
+        x = MaxPooling2D((2, 2), padding='same')(x)
+        x = Conv2D(layer_filter, (3, 3), activation='relu', padding='same')(x)
+        encoded = MaxPooling2D((2, 2), padding='same')(x)
 
-        shape = K.int_shape(x)
+        x = Conv2D(layer_filter, (3, 3), activation='relu', padding='same')(encoded)
+        x = UpSampling2D((2, 2))(x)
+        x = Conv2D(layer_filter, (3, 3), activation='relu', padding='same')(x)
+        x = UpSampling2D((2, 2))(x)
 
-        # latent vector
         x = Flatten()(x)
-        latent = Dense(latent_dim, name='latent_vector')(x)
+        decoded = Dense(10, activation='sigmoid')(x)
 
-        # encoder
-        encoder = Model(inputs, latent, name='encoder')
-        encoder.summary()
+        autoencoder = Model(inputs, decoded)
+        autoencoder.summary()
 
-        # decoder
-        latent_inputs = Input(shape=(latent_dim,), name='decoder_input')
-        x = Dense(shape[1] * shape[2] * shape[3])(latent_inputs)
-        x = Reshape((shape[1], shape[2], shape[3]))(x)
+        autoencoder.compile(optimizer='adam', loss = 'sparse_categorical_crossentropy', metrics=['accuracy'])
+
+        early_stopping = self.get_callbacks()
+
+        history = autoencoder.fit(X, y,
+                    validation_split=validation_split,
+                    epochs=epochs,
+                    batch_size=batch_size,
+                    callbacks=early_stopping)
         
-        # stack of Conv2DTranspose(64)-Conv2DTranspose(32)
-        for filters in layer_filters[::-1]: # last layer
-            x = Conv2DTranspose(filters=filters,
-                                kernel_size=kernel_size,
-                                strides=2,
-                                activation='relu',
-                                padding='same')(x)
-            
-        x = Flatten()(x)
-
-        outputs = Dense(10, activation='sigmoid', name='decoder_output')(x)
-
-        # instantiate decoder
-        decoder = Model(latent_inputs, outputs, name='decoder')
-        decoder.summary()
-
-        # instantiate autoencoder
-        autoencoder = Model(inputs, decoder(encoder(inputs)), name='autoencoder')
-        autoencoder.summary()
-
-        autoencoder.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['acc'])
-        autoencoder.summary()
-
-        # train
-        history = autoencoder.fit(X_test, y_test,
-                                validation_data=[X, y],
-                                # validation_split=validation_split,
-                                epochs=epochs,
-                                batch_size=batch_size)
+        # predict autoencoder output
+        y_preds = autoencoder.predict(X_test)
 
         # score
-        loss, acc = autoencoder.evaluate(X, y, verbose=0)
-
-        autoencoder.save('denoising_autoenconder.model')
-
-        # predict autoencoder output
-        predictions = autoencoder.predict(X)
-
-        return history, loss, acc, predictions
+        loss, acc = autoencoder.evaluate(X_test, y_test)
+        
+        return history, loss, acc, y_preds
