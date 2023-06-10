@@ -66,7 +66,7 @@ class DataLoader():
         images = []
 
         for key in ratios.keys():
-            images.extend(random.choices(self.data_dict[key], k=int(ratios[key] * size)))
+            images.extend(random.sample(self.data_dict[key], k=int(ratios[key] * size)))
             
         return images
 
