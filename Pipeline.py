@@ -27,8 +27,7 @@ for dataset in inference_datasets:
     transformed_inference_datasets.append(transformed_images)
 
 
-
-for dataset in range(len(transformed_inference_datasets[:1])):
+for dataset in range(len(transformed_inference_datasets)):
     
     # inital inference with SOA
     correct_count, incorrect_images, correct_images = MNIST_SOA_Model().run_inference(transformed_inference_datasets[dataset])
@@ -71,7 +70,7 @@ for dataset in range(len(transformed_inference_datasets[:1])):
 
     # post denoiser inference with SOA
     correct_count, incorrect_images, correct_images = MNIST_SOA_Model().run_inference(final_images)
-    print(correct_count * 100, '% Accuracy with breakout:')
+    print(correct_count * 100, '% Accuracy with breakout:', str(breakouts[dataset]))
     post_denoiser_results.append((breakouts[dataset],correct_count * 100))
 
     print("Pre Denoiser Results")
