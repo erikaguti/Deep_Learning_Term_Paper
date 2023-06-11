@@ -73,10 +73,10 @@ for dataset in range(len(transformed_inference_datasets)):
     print(correct_count * 100, '% Accuracy with breakout:', str(breakouts[dataset]))
     post_denoiser_results.append((breakouts[dataset],correct_count * 100))
 
-    print("Pre Denoiser Results")
-    print(pre_denoiser_results)
-    print("Post Denoiser Results")
-    print(post_denoiser_results)
+print("Pre Denoiser Results")
+print(pre_denoiser_results)
+print("Post Denoiser Results")
+print(post_denoiser_results)
 
 
 
