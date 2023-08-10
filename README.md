@@ -16,7 +16,7 @@ Below is an example of a batch of images used in the proof of concept and their 
 
 ![n2](https://github.com/erikaguti/Deep_Learning_Term_Paper/assets/57955273/52ca6fa1-e9f9-4f67-a0d8-a187d55e2612)
 
-As one more test we applied a denoising to images from [The Street View House Numbers (SVHN) Dataset](http://ufldl.stanford.edu/housenumbers/) and and digit classification performance. Again denoising improved performance, this time by 2.5%
+As one more test we applied denoising to images from [The Street View House Numbers (SVHN) Dataset](http://ufldl.stanford.edu/housenumbers/) and and digit classification performance. Again denoising improved performance, this time by 2.5%
 
 A full write up of this project can be found in this [report](https://github.com/erikaguti/Deep_Learning_Term_Paper/blob/main/DataCentricDL.pdf).
 
