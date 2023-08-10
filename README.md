@@ -1,4 +1,4 @@
-# Project Assessing Data Centric Approaches for DNN Model Performance Enhancement
+# Project Assessing Data Centric Approaches for OCR Model Performance Enhancement
 
 This project was done in collaboration with [Shaney Sze](https://www.linkedin.com/in/shaneysze/) at the Barcelona School of Economics. Inspired by Andrew Ngo’s Campaign for [Data Centric AI](https://https-deeplearning-ai.github.io/data-centric-comp/), we set out to create a computer vision data ingestion pipeline that incorporates AI-informed data quality enhancement. A diagram of this pipeline created is outlined below:
 
